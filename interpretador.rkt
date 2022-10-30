@@ -1,4 +1,12 @@
 #lang eopl
+#|
+    Integrantes:
+    César Alejandro Grijalba Zúñiga - 202110035
+    Johan Sebastian Tombe - 202110051
+    Laura Murillas Andrade - 1944153
+    Juan Esteban Mazuera - 2043008
+    Sheilly Ortega - 2040051
+|#
 
 #|
     Diseñe un interpretador para la siguiente gramática que realiza
@@ -98,18 +106,16 @@
    9
 |#
 
-
-
 #|
     6) Extienda la gramática para crear procedimientos
     <expresion> := procedimiento (<identificador>*',') haga <expresion> finProc procedimiento-ex (ids cuero)
     Para esto debe definir un datatype para la cerradura (o ProcVal) que debe tener 3 campos:
     1. Lista ID del procedimiento
     2. Cuerpo del procedimiento
-    3. Ambiente donde fue declarado|#
+    3. Ambiente donde fue declarado
+|#
 
 #|
-
 (define-datatype procVal procVal?
   (cerradura
    (lista-ID (list-of symbol?))
@@ -132,9 +138,9 @@
     7) Extienda la gramática para evaluar procedimientos:
     <expresion> :=  "evaluar" expresion   (expresion ",")*  finEval
                 app-exp(exp exps)
- |#
+|#
 
- #|
+#|
     Debe probar:
     -->  declarar (
          @x=2;
