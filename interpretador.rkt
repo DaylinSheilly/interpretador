@@ -9,6 +9,22 @@
     Valores expresado: Texto + Número + Booleano + ProcVal
 |#
 
+;Especificación Léxica
+(define scanner-spec-simple-interpreter
+'((white-sp
+   (whitespace) skip)
+  (comment
+   ("%" (arbno (not #\newline))) skip)
+  (identifier
+   (letter (arbno (or letter digit "?"))) symbol)
+  (number
+   (digit (arbno digit)) number)
+  (number
+   ("-" digit (arbno digit)) number)))
+
+;Especificación Sintáctica (gramática)
+(define grammar-simple-interpreter
+  '(
 #|
     <programa> :=  <expresion> 
                un-programa (exp)
@@ -22,6 +38,7 @@
                 primapp-bin-exp (exp1 prim-binaria exp2)
                 := <primitiva-unaria> (<expresion>)
                 primapp-un-exp (prim-unaria exp)|#
+;;              ::= Si <expresion> entonces <expresion> sino <expresion> finSI
 
 #|
     <primitiva-binaria> :=  + (primitiva-suma)
@@ -81,12 +98,39 @@
     --> Si (longitud(@d) ~ 4) entonces 2 sino 3 finSI
     3
 |#
+    (expression ("Si" expression "entonces" expression "sino" expression "finSI")
+                if-exp)
 
 #|
     5) Implemente declaración de variables locales:
     <expresion> := declarar (<identificador> = <expresion> (;)) { <expresion> }
                 variableLocal-exp (ids exps cuerpo)
 |#
+
+    )
+)
+
+;El Interpretador (FrontEnd + Evaluación + señal para lectura )
+
+(define interpretador
+  (sllgen:make-rep-loop  "--> "
+    (lambda (pgm) (eval-program  pgm)) 
+    (sllgen:make-stream-parser 
+      scanner-spec-simple-interpreter
+      grammar-simple-interpreter)
+  )
+)
+
+;El Interprete
+
+;eval-program: <programa> -> numero
+; función que evalúa un programa teniendo en cuenta un ambiente dado (se inicializa dentro del programa)
+
+(define eval-program
+  (lambda (pgm)
+    (cases program pgm
+      (a-program (body)
+                 (eval-expression body (init-env))))))
 
 #|
     Debe probar:
