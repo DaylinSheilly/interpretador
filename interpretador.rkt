@@ -1,5 +1,7 @@
 #lang eopl
 
+; aquí van los nombres de los integrantes 
+
 #|
     Diseñe un interpretador para la siguiente gramática que realiza
     operaciones con notación infija:
