@@ -8,6 +8,8 @@
 |#
 
 #|
+    La definición BNF para las expresiones del lenguaje:
+
     <programa> :=  <expresion> 
                un-programa (exp)
     <expresion> := <numero>
@@ -19,17 +21,12 @@
                 := (<expresion> <primitiva-binaria> <expresion>)
                 primapp-bin-exp (exp1 prim-binaria exp2)
                 := <primitiva-unaria> (<expresion>)
-                primapp-un-exp (prim-unaria exp)|#
-
-#|
+                primapp-un-exp (prim-unaria exp)
     <primitiva-binaria> :=  + (primitiva-suma)
                         :=  ~ (primitiva-resta)
                         :=  / (primitiva-div)
                         :=  * (primitiva-multi)
                         :=  concat (primitiva-concat)
-|#
-
-#|
     <primitiva-unaria> :=  longitud (primitiva-longitud)
                        :=  add1 (primitiva-add1)
                        :=  sub1 (primitiva-sub1)
@@ -42,6 +39,26 @@
     <identificador>: En este lenguaje todo identificador iniciará con el símbolo  @, es decir las
                      variables @x y @z son válidas
 |#
+
+;especificacion lexica 
+
+(define scaner-spec
+'(
+    (white-sp (whitespace) skip)
+    (comment ("//" (arbno (not #\newline))) skip)
+    (identificador ("@" (arbno (or letter digit "?"))) symbol)
+    (texto ("/" (arbno (not #\newline)) "/") string)
+    ; enteros positivos y negativos
+    (numero (digit (arbno digit)) number)
+    (numero ("-" digit (arbno digit)) number)
+    ; flotantes positivos y negativos
+    (numero (digit (arbno digit) "." digit (arbno digit)) number)
+    (numero ("-" digit (arbno digit) "." digit (arbno digit)) number)
+)
+)
+
+
+
 
 #|
     2)Defina un ambiente inicial con las variables (@a @b @c @d @e) con valores (1 2 3 "hola" "FLP")
@@ -64,7 +81,8 @@
 #|
     3) Implemente los Booleanos:
     En una expresión numérica, 0 es falso, cualquier otro caso es verdadero. Para esto diseñe la
-    función valor-verdad? que realiza esta verificación.|#
+    función valor-verdad? que realiza esta verificación.
+|#
 
 #|
     4) Extienda la gramática con condicionales:
