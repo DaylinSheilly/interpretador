@@ -46,8 +46,9 @@
 '(
     (white-sp (whitespace) skip)
     (comment ("//" (arbno (not #\newline))) skip)
-    (identificador ("@" (arbno (or letter digit "?"))) symbol)
-    (texto ("/" (arbno (not #\newline)) "/") string)
+    (identificador 
+    ("@" (arbno (or letter digit)) "?") symbol)
+    (texto("/" (arbno (or letter digit)) "/") string)
     ; enteros positivos y negativos
     (numero (digit (arbno digit)) number)
     (numero ("-" digit (arbno digit)) number)
