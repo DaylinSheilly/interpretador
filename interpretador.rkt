@@ -12,6 +12,7 @@
 
     <programa> :=  <expresion> 
                un-programa (exp)
+
     <expresion> := <numero>
                 numero-lit (num)
                 := "\""<texto> "\""
@@ -22,12 +23,17 @@
                 primapp-bin-exp (exp1 prim-binaria exp2)
                 := <primitiva-unaria> (<expresion>)
                 primapp-un-exp (prim-unaria exp)
-                := 
+                := "Si" <expresion> "entonces" <expresion> "sino" <expresion> "finSi"
+                condicional-exp(test-exp true-exp false-exp)
+                := "declarar" "(" <identificador> "=" <expresion> (";") ")" "{" <expresion> "}"
+                variableLocal-exp(ids exps cuerpo)
+
     <primitiva-binaria> :=  + (primitiva-suma)
                         :=  ~ (primitiva-resta)
                         :=  / (primitiva-div)
                         :=  * (primitiva-multi)
                         :=  concat (primitiva-concat)
+
     <primitiva-unaria> :=  longitud (primitiva-longitud)
                        :=  add1 (primitiva-add1)
                        :=  sub1 (primitiva-sub1)
@@ -84,6 +90,9 @@
     (primitiva-binaria ("*") primitiva-multi)
     (primitiva-binaria ("/") primitiva-div)
     (primitiva-binaria ("concat") primitiva-concat)
+
+    (expression ("Si" expression "entonces" expression "sino" expression "finSI") condicional-exp)
+    ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}")
    )
 )
 
@@ -186,6 +195,10 @@
                       (apply-un-primitive prim-unaria (eval-expression exp env)))
       (primapp-bin-exp (exp1 prim-binaria exp2)
                        (apply-bin-primitive (eval-expression exp1 env) prim-binaria (eval-expression exp2 env)))
+      (condicional-exp (test-exp true-exp false-exp)
+                       ((if (true-value? (eval-expression test-exp env))
+                        (eval-expression true-exp env)
+                        (eval-expression false-exp env)))
       ))
 )
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una 
