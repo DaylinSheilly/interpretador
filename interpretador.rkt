@@ -57,6 +57,32 @@
 )
 )
 
+;especificacion sintactica 
+
+(define grammar-simple-interpreter
+  '((program (expression) a-program)
+    (expression (numero) numero-lit)
+    (expresion (texto) texto-lit)
+    (expression (identificador) var-exp)
+    (expresion ())
+    (expression
+     (primitive "(" (separated-list expression ",")")")
+     primapp-exp)
+   
+    ; características adicionales
+    (expression ("if" expression "then" expression "else" expression)
+                if-exp)
+    (expression ("let" (arbno identifier "=" expression) "in" expression)
+                let-exp)
+    ;;;;;;
+    (primitive ("+") add-prim)
+    (primitive ("-") substract-prim)
+    (primitive ("*") mult-prim)
+    (primitive ("add1") incr-prim)
+    (primitive ("sub1") decr-prim)))
+
+
+
 
 
 
