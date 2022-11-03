@@ -92,7 +92,7 @@
     (primitiva-binaria ("concat") primitiva-concat)
 
     (expression ("Si" expression "entonces" expression "sino" expression "finSI") condicional-exp)
-    ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}")
+    (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
    )
 )
 
@@ -198,7 +198,8 @@
       (condicional-exp (test-exp true-exp false-exp)
                        ((if (true-value? (eval-expression test-exp env))
                         (eval-expression true-exp env)
-                        (eval-expression false-exp env)))
+                        (eval-expression false-exp env))))
+      (variableLocal-exp (ids exps cuerpo) (0))
       ))
 )
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una 
