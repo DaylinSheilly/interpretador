@@ -56,7 +56,7 @@
     ("%"(arbno (not #\newline))) skip)
   ;pregunta como colocar \ \ y letras y numeros al tiempo
   (texto
-   ("/" (arbno (or letter digit)) "/") string)
+   ("\"" (arbno (or letter digit whitespace)) "\"") string)
   ;pregunta solo debe ser valido un ? y cómo se haría
   (identificador
    ("@" (arbno (or letter digit)) "?") symbol)
@@ -92,7 +92,7 @@
     (primitiva-binaria ("concat") primitiva-concat)
 
     (expression ("Si" expression "entonces" expression "sino" expression "finSI") condicional-exp)
-    (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
+    (expression ("declarar" "(" (arbno identificador "=" expression) ";" ")" "{" expression "}") variableLocal-exp)
    )
 )
 
@@ -199,7 +199,7 @@
                        ((if (true-value? (eval-expression test-exp env))
                         (eval-expression true-exp env)
                         (eval-expression false-exp env))))
-      (variableLocal-exp (ids exps cuerpo) (0))
+      (variableLocal-exp (ids exps cuerpo) (let ((args (eval-rands exps env))) (eval-expression cuerpo (extend-env ids exps env))))
       ))
 )
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una 
@@ -228,8 +228,17 @@
       (primitiva-resta () (- exp1 exp2))
       (primitiva-multi () (* exp1 exp2))
       (primitiva-div () (/ exp1 exp2))
-      (primitiva-concat () (string-append (number->string exp1) (number->string exp2)))
-      )))
+      (primitiva-concat () (string-append (recortar-string exp1) (recortar-string exp2)))
+    )
+  )
+)
+
+;recortar-string: <string> -> <string>
+(define recortar-string
+  (lambda (str)
+    (substring str 1 (- (string-length str) 1))
+  )
+)
 
 ;true-value?: determina si un valor dado corresponde a un valor booleano falso o verdadero
 (define true-value?
