@@ -93,6 +93,8 @@
 
     (expression ("Si" expression "entonces" expression "sino" expression "finSI") condicional-exp)
     (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
+
+    (expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
    )
 )
 
@@ -200,6 +202,10 @@
                         (eval-expression true-exp env)
                         (eval-expression false-exp env))))
       (variableLocal-exp (ids exps cuerpo) (0))
+
+      (procedimiento-exp (ids cuerpo)
+                         (cerradura ids cuerpo env))
+
       ))
 )
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una 
@@ -235,6 +241,23 @@
 (define true-value?
   (lambda (x)
     (not (zero? x))))
+
+;************************************************************************************************
+;Procedimientos
+(define-datatype procval procval?
+  (cerradura
+   (list-ID (list-of symbol?))
+   (exp expression?)
+   (amb environment?)))
+
+;apply-procedure: evalua el cuerpo de un procedimientos en el ambiente extendido correspondiente
+(define apply-procedure
+  (lambda (proc args)
+    (cases procval proc
+      (cerradura (ids cuerpo env)
+               (eval-expression cuerpo (extend-env ids args env))))))
+
+;************************************************************************************************
 
 ;*******************************************************************************************
 ;Ambientes
