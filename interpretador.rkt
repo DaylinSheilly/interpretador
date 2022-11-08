@@ -362,12 +362,13 @@
 
 ;eval-expression: <expression> <enviroment> -> numero
 ; evalua la expresión en el ambiente de entrada
+;punto2
 (define eval-expression
   (lambda (exp env)
     (cases expression exp
       (numero-lit (num) num)
       (texto-lit (txt) txt)
-      (var-exp (id) (apply-env env id))
+      (var-exp (id) (buscar-variable env id)) ;por aqui entra
       (primapp-un-exp (prim-unaria exp)
                       (apply-un-primitive prim-unaria (eval-expression exp env)))
       (primapp-bin-exp (exp1 prim-binaria exp2)
@@ -379,6 +380,8 @@
       (variableLocal-exp (ids exps cuerpo) (0))
       ))
 )
+
+
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una
 ; lista de operandos (expresiones)
 (define eval-rands
