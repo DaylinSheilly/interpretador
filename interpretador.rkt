@@ -236,7 +236,7 @@
    ("/" (arbno (or letter digit)) "/") string)
   ;pregunta solo debe ser valido un ? y cómo se haría
   (identificador
-   ("@" (arbno (or letter digit)) "?") symbol)
+   ("@" (arbno (or letter digit "?"))) symbol)
   ; enteros positivos y negativos
   (numero
    (digit (arbno digit)) number)
