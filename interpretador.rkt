@@ -472,5 +472,31 @@
                 (+ list-index-r 1)
                 #f))))))
 
+
 ;******************************************************************************************
+;PUNTO 2
+;PASO 1: Defina un ambiente inicial con las variables @a @b @c @d @e con los valores (1 2 3 "hola" "FLP")
+;PASO 2: modifique su funcion eval-expression para que acepte dicho ambiente.
+;PASO 3: Diseñe una funcion llamada buscar-variable que recibe un simbolo (identificador) y un ambiente
+;Retorna el valor si encuentra la variable en el ambiente, en el caso contrario "Error, la variable no existe"
+
+;Pruebas:
+; ->@a
+; 1
+; ->@b
+; 2
+; ->@e
+; "FLP"
+
+
+;PASO 1
+(define inicial-env
+  (lambda ()
+    (extend-env '(@a @b @c @d @e) '(1 2 3 "hola" "FLP") (empty-env))))
+
+
+
+;******************************************************************************************
+
+
 ;EJERCICIOS
