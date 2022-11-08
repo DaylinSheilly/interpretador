@@ -344,7 +344,7 @@
   (lambda (pgm)
     (cases program pgm
       (a-program (body)
-                 (eval-expression body (init-env))))))
+                 (eval-expression body (inicial-env))))))
 
 ; Ambiente inicial
 ;(define init-env
@@ -442,18 +442,18 @@
   (lambda (syms vals env)
     (extended-env-record syms vals env)))
 
-;función que busca un símbolo en un ambiente
-(define apply-env
-  (lambda (env sym)
+;función que busca un identificador en un ambiente
+;Cambiar simbolo por identificador
+(define buscar-variable
+  (lambda (env idn) ;idn es simbolo a buscar
     (cases environment env
       (empty-env-record ()
-                        (eopl:error 'apply-env "No binding for ~s" sym))
-      (extended-env-record (syms vals env)
-                           (let ((pos (list-find-position sym syms)))
+                        (eopl:error 'apply-env "Error la variable no existe: ~s" idn))
+      (extended-env-record (lista-idn vals env) ;lista-idn es lista de simbolos - vals es lista de valores
+                           (let ((pos (list-find-position idn lista-idn)))
                              (if (number? pos)
                                  (list-ref vals pos)
-                                 (apply-env env sym)))))))
-
+                                 (buscar-variable env idn)))))))
 
 ;****************************************************************************************
 ;Funciones Auxiliares
@@ -503,3 +503,5 @@
 
 
 ;EJERCICIOS
+
+a)
