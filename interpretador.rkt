@@ -96,6 +96,8 @@
     (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
 
     (expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
+    ;;Al final me queda una comita (QUITARLA)
+    (expression ("evaluar" expression "("(arbno expression "," ) ")" "finEval" ) app-exp)
    )
 )
 
@@ -202,10 +204,22 @@
                        ((if (true-value? (eval-expression test-exp env))
                         (eval-expression true-exp env)
                         (eval-expression false-exp env))))
-      (variableLocal-exp (ids exps cuerpo) (0))
+      ;;(variableLocal-exp (ids exps cuerpo) (0))
+      (variableLocal-exp (ids exps cuerpo)
+               (let ((args (eval-rands exps env)))
+                 (eval-expression cuerpo
+                                  (extend-env ids args env))))
 
       (procedimiento-exp (ids cuerpo)
                          (cerradura ids cuerpo env))
+        
+        (app-exp (rator rands)
+               (let ((proc (eval-expression rator env))
+                     (args (eval-rands rands env)))
+                 (if (procval? proc)
+                     (apply-procedure proc args)
+                     (eopl:error 'eval-expression
+                                 "Attempt to apply non-procedure ~s" proc))))
 
       ))
 )
