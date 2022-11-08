@@ -59,7 +59,8 @@
    ("/" (arbno (or letter digit)) "/") string)
   ;pregunta solo debe ser valido un ? y cómo se haría
   (identificador
-   ("@" (arbno (or letter digit)) "?") symbol)
+   ;;("@" (arbno (or letter digit)) "?") symbol)
+   ("@" letter (arbno (or letter digit "?"))) symbol)
   ; enteros positivos y negativos
   (numero 
    (digit (arbno digit)) number)
@@ -181,8 +182,8 @@
 (define init-env
   (lambda ()
     (extend-env
-     '(@x @y @z)
-     '(4 2 5)
+     '(@a @b @c @d @e @f)
+     '(1 2 3 "hola" "FLP")
      (empty-env))))
 
 ;eval-expression: <expression> <enviroment> -> numero
