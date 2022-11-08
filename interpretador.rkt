@@ -71,6 +71,12 @@
     (expression (numero) numero-lit)
     (expression (texto) texto-lit)
     (expression (identificador) var-exp)
+    (expression ("("expression primitiva-binaria expression")") primapp-bin-exp)
+    (primitiva-binaria ("+") primitiva-suma)
+    (primitiva-binaria ("~") primitiva-resta)
+    (primitiva-binaria ("*") primitiva-multi)
+    (primitiva-binaria ("/") primitiva-div)
+    (primitiva-binaria ("concat") primitiva-concat)
     (expression (primitiva-unaria "("expression")") primapp-un-exp)
     (primitiva-unaria ("longitud") primitiva-longitud)
     (primitiva-unaria ("add1") primitiva-add1)
@@ -173,6 +179,8 @@
       (numero-lit (num) num)
       (texto-lit (txt) txt)
       (var-exp (id) (apply-env env id))
+      (primapp-bin-exp (exp1 prim-binaria exp2)
+                       (apply-bin-primitive (eval-expression exp1 env) prim-binaria (eval-expression exp2 env)))
       (primapp-un-exp (prim-unaria exp)
                       (apply-un-primitive prim-unaria (eval-expression exp env)))
       ))
@@ -194,6 +202,17 @@
       (primitiva-longitud ()(-(string-length args)2))
       (primitiva-add1 () (+ args 1))
       (primitiva-sub1 () (- args 1)))))
+
+;apply-bin-primitive: (<expression> <primitiva-binaria> <expression>) -> numero
+(define apply-bin-primitive
+  (lambda (exp1 prim-binaria exp2)
+    (cases primitiva-binaria prim-binaria
+      (primitiva-suma () (+ exp1 exp2))
+      (primitiva-resta () (- exp1 exp2))
+      (primitiva-multi () (* exp1 exp2))
+      (primitiva-div () (/ exp1 exp2))
+      (primitiva-concat () (string-append (number->string exp1) (number->string exp2)))
+      )))
 
 ;true-value?: determina si un valor dado corresponde a un valor booleano falso o verdadero
 (define true-value?
