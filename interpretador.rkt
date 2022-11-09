@@ -199,8 +199,10 @@
                        ((if (true-value? (eval-expression test-exp env))
                         (eval-expression true-exp env)
                         (eval-expression false-exp env))))
-      (variableLocal-exp (ids exps cuerpo) (let ((args (eval-rands exps env))) 0))
-      ))
+      (variableLocal-exp (ids exps cuerpo) (let ((args (eval-rands exps env))) 
+                                                (eval-expression cuerpo (extend-env ids args env))))
+    )
+  )
 )
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una 
 ; lista de operandos (expresiones)
