@@ -59,7 +59,7 @@
    ("\"" (arbno (or letter digit whitespace)) "\"") string)
   ;pregunta solo debe ser valido un ? y cómo se haría
   (identificador
-   ("@" (arbno (or letter digit)) "?") symbol)
+   ("@" (arbno (or letter digit "?"))) symbol)
   ; enteros positivos y negativos
   (numero 
    (digit (arbno digit)) number)
@@ -92,7 +92,7 @@
     (primitiva-binaria ("concat") primitiva-concat)
 
     (expression ("Si" expression "entonces" expression "sino" expression "finSI") condicional-exp)
-    (expression ("declarar" "(" (arbno identificador "=" expression) ";" ")" "{" expression "}") variableLocal-exp)
+    (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
    )
 )
 
@@ -199,7 +199,7 @@
                        ((if (true-value? (eval-expression test-exp env))
                         (eval-expression true-exp env)
                         (eval-expression false-exp env))))
-      (variableLocal-exp (ids exps cuerpo) (let ((args (eval-rands exps env))) (eval-expression cuerpo (extend-env ids exps env))))
+      (variableLocal-exp (ids exps cuerpo) (let ((args (eval-rands exps env))) 0))
       ))
 )
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una 
