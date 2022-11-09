@@ -1,4 +1,12 @@
 #lang eopl
+#|
+    Integrantes:
+    César Alejandro Grijalba Zúñiga - 202110035
+    Johan Sebastian Tombe - 202110051
+    Laura Murillas Andrade - 1944153
+    Juan Esteban Mazuera - 2043008
+    Sheilly Ortega - 2040051
+|#
 
 #|
     Diseñe un interpretador para la siguiente gramática que realiza
@@ -99,6 +107,7 @@
 ;Tipos de datos para la sintaxis abstracta de la gramática
 
 ;Construidos manualmente:
+
 
 ;(define-datatype program program?
 ;  (a-program
@@ -214,6 +223,7 @@
   (lambda (rand env)
     (eval-expression rand env)))
 
+
 ;apply-un-primitive: <primitiva-unaria> (<expression>) -> numero
 (define apply-un-primitive
   (lambda (prim-unaria exp)
@@ -288,6 +298,40 @@
 
 ;****************************************************************************************
 ;Funciones Auxiliares
+
+#|
+    7) Extienda la gramática para evaluar procedimientos:
+    <expresion> :=  "evaluar" expresion   (expresion ",")*  finEval
+                app-exp(exp exps)
+|#
+
+#|
+    Debe probar:
+    -->  declarar (
+         @x=2;
+         @y=3;
+         @a=procedimiento (@x,@y,@z) haga ((@x+@y)+@z) finProc
+         ) {
+         evaluar @a (1,2,@x) finEval
+         }
+    5
+    --> declarar (
+        @x=procedimiento (@a,@b) haga ((@a*@a) + (@b*@b)) finProc;
+        @y=procedimiento (@x,@y) haga (@x+@y) finProc
+        ) {
+        ( evaluar @x(1,2) finEval + evaluar @y(2,3) finEval )
+        }
+        10
+    --> declarar (
+        @x= Si (@a*@b) entonces (@d concat @e) sino longitud((@d concat
+        @e)) finSI;
+        @y=procedimiento (@x,@y) haga (@x+@y) finProc
+        ) {
+        ( longitud(@x) * evaluar @y(2,3) finEval )
+          }
+    35
+|#
+
 
 ; funciones auxiliares para encontrar la posición de un símbolo
 ; en la lista de símbolos de unambiente
