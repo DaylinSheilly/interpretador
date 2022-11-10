@@ -7,13 +7,11 @@
     Juan Esteban Mazuera - 2043008
     Sheilly Ortega - 2040051
 |#
-
 #|
     La definición BNF para las expresiones del lenguaje:
 
     <programa> :=  <expresion> 
                un-programa (exp)
-
     <expresion> := <numero>
                 numero-lit (num)
                 := "\""<texto> "\""
@@ -28,18 +26,15 @@
                 condicional-exp(test-exp true-exp false-exp)
                 := "declarar" "(" <identificador> "=" <expresion> (";") ")" "{" <expresion> "}"
                 variableLocal-exp(ids exps cuerpo)
-
     <primitiva-binaria> :=  + (primitiva-suma)
                         :=  ~ (primitiva-resta)
                         :=  / (primitiva-div)
                         :=  * (primitiva-multi)
                         :=  concat (primitiva-concat)
-
     <primitiva-unaria> :=  longitud (primitiva-longitud)
                        :=  add1 (primitiva-add1)
                        :=  sub1 (primitiva-sub1)
 |#
-
 #|
     Tenga en cuenta que:
     <numero>: Debe definirse para valores decimales y enteros (positivos y negativos)
@@ -57,11 +52,10 @@
     ("%"(arbno (not #\newline))) skip)
   ;pregunta como colocar \ \ y letras y numeros al tiempo
   (texto
-   ("/" (arbno (or letter digit)) "/") string)
+   ("\"" (arbno (or letter digit whitespace)) "\"") string)
   ;pregunta solo debe ser valido un ? y cómo se haría
   (identificador
-   ;;("@" (arbno (or letter digit)) "?") symbol)
-   ("@" letter (arbno (or letter digit "?"))) symbol)
+   ("@" (arbno (or letter digit "?"))) symbol)
   ; enteros positivos y negativos
   (numero 
    (digit (arbno digit)) number)
@@ -97,7 +91,6 @@
     (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
 
     (expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
-    ;;Al final me queda una comita (QUITARLA)
     (expression ("evaluar" expression "("(arbno expression "," ) ")" "finEval" ) app-exp)
    )
 )
@@ -175,13 +168,6 @@
       (a-program (body)
                  (eval-expression body (init-env))))))
 
-; Ambiente inicial
-;(define init-env
-;  (lambda ()
-;    (extend-env
-;     '(x y z)
-;     '(4 2 5)
-;     (empty-env))))
 (define init-env
   (lambda ()
     (extend-env
@@ -205,16 +191,13 @@
                        ((if (true-value? (eval-expression test-exp env))
                         (eval-expression true-exp env)
                         (eval-expression false-exp env))))
-      ;;(variableLocal-exp (ids exps cuerpo) (0))
       (variableLocal-exp (ids exps cuerpo)
                (let ((args (eval-rands exps env)))
                  (eval-expression cuerpo
                                   (extend-env ids args env))))
-
       (procedimiento-exp (ids cuerpo)
                          (cerradura ids cuerpo env))
-        
-        (app-exp (rator rands)
+      (app-exp (rator rands)
                (let ((proc (eval-expression rator env))
                      (args (eval-rands rands env)))
                  (if (procval? proc)
@@ -310,8 +293,6 @@
                              (if (number? pos)
                                  (list-ref vals pos)
                                  (apply-env env sym)))))))
-
-
 
 ; funciones auxiliares para encontrar la posición de un símbolo
 ; en la lista de símbolos de unambiente
