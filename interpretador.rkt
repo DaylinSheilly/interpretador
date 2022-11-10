@@ -1,10 +1,11 @@
 #lang eopl
-
 #|
-    Diseñe un interpretador para la siguiente gramática que realiza
-    operaciones con notación infija:
-    Valores denotados: Texto + Número + Booleano + ProcVal
-    Valores expresado: Texto + Número + Booleano + ProcVal
+    Integrantes:
+    César Alejandro Grijalba Zúñiga - 202110035
+    Johan Sebastian Tombe - 202110051
+    Laura Murillas Andrade - 1944153
+    Juan Esteban Mazuera - 2043008
+    Sheilly Ortega - 2040051
 |#
 
 #|
@@ -219,10 +220,8 @@
                  (if (procval? proc)
                      (apply-procedure proc args)
                      (eopl:error 'eval-expression
-                                 "Attempt to apply non-procedure ~s" proc))))
+                                 "Attempt to apply non-procedure ~s" proc)))))))
 
-      ))
-)
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una 
 ; lista de operandos (expresiones)
 (define eval-rands
@@ -313,8 +312,6 @@
                                  (apply-env env sym)))))))
 
 
-;****************************************************************************************
-;Funciones Auxiliares
 
 ; funciones auxiliares para encontrar la posición de un símbolo
 ; en la lista de símbolos de unambiente
@@ -332,6 +329,3 @@
               (if (number? list-index-r)
                 (+ list-index-r 1)
                 #f))))))
-
-;******************************************************************************************
-;EJERCICIOS
