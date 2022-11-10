@@ -179,8 +179,6 @@
 ;******************************************************************************************
 
 
-#lang eopl
-
 #|
     Diseñe un interpretador para la siguiente gramática que realiza
     operaciones con notación infija:
@@ -270,6 +268,9 @@
 
     (expression ("Si" expression "entonces" expression "sino" expression "finSI") condicional-exp)
     (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
+    (expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
+     ;;Al final me queda una comita (QUITARLA)
+    (expression ("evaluar" expression "("(arbno expression "," ) ")" "finEval" ) app-exp)
    )
 )
 
@@ -377,10 +378,25 @@
                        ((if (true-value? (eval-expression test-exp env))
                         (eval-expression true-exp env)
                         (eval-expression false-exp env))))
-      (variableLocal-exp (ids exps cuerpo) (0))
-      ))
-)
+      ;(variableLocal-exp (ids exps cuerpo) (0))
+      (variableLocal-exp (ids exps cuerpo)
+               (let ((args (eval-rands exps env)))
+                 (eval-expression cuerpo
+                                  (extend-env ids args env))))
 
+      (procedimiento-exp (ids cuerpo)
+                         (cerradura ids cuerpo env))
+
+        (app-exp (rator rands)
+               (let ((proc (eval-expression rator env))
+                     (args (eval-rands rands env)))
+                 (if (procval? proc)
+                     (apply-procedure proc args)
+                     (eopl:error 'eval-expression
+                                 "Attempt to apply non-procedure ~s" proc))))
+
+
+      )))
 
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una
 ; lista de operandos (expresiones)
@@ -417,6 +433,22 @@
     (not (zero? x))))
 
 ;*******************************************************************************************
+;Procedimientos
+(define-datatype procval procval?
+  (cerradura
+   (list-ID (list-of symbol?))
+   (exp expression?)
+   (amb environment?)))
+
+;apply-procedure: evalua el cuerpo de un procedimientos en el ambiente extendido correspondiente
+(define apply-procedure
+  (lambda (proc args)
+    (cases procval proc
+      (cerradura (ids cuerpo env)
+               (eval-expression cuerpo (extend-env ids args env))))))
+
+;************************************************************************************************
+
 ;Ambientes
 
 ;definición del tipo de dato ambiente
@@ -455,6 +487,7 @@
                                  (list-ref vals pos)
                                  (buscar-variable env idn)))))))
 
+
 ;****************************************************************************************
 ;Funciones Auxiliares
 
@@ -474,7 +507,6 @@
               (if (number? list-index-r)
                 (+ list-index-r 1)
                 #f))))))
-
 
 ;******************************************************************************************
 ;PUNTO 2
@@ -499,9 +531,36 @@
 
 
 
+
+
 ;******************************************************************************************
-
-
 ;EJERCICIOS
 
-a)
+;a) 10pts. Escriba un programa en su lenguaje de programación que contenga un procedimiento areaCirculo que permita calcular
+;el area de un circulo dado un radio (A=PI*r*r). Debe incluir valores flotantes en su lenguaje de programación.
+;Deberá invocarlo utilizando una variable @radio como parámetro:
+
+;-->  declarar (
+;
+ ;     @radio=2.5;
+;
+;      @areaCirculo= //aquí va el procedimiento
+;
+;     ) {
+;
+ ;        evaluar @areaCirculo (@radio) finEval
+;
+ ;      }
+
+(declarar(
+         @radio=2.5;
+         @areaCirculo=2;
+         ){
+           evaluar @areaCirculo(@radio) finEval
+           })
+
+
+;(expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
+;(expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
+;Al final me queda una comita (QUITARLA)
+;(expression ("evaluar" expression "("(arbno expression "," ) ")" "finEval" ) app-exp)
