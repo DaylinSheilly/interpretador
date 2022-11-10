@@ -182,7 +182,7 @@
     (cases expression exp
       (numero-lit (num) num)
       (texto-lit (txt) txt)
-      (var-exp (id) (apply-env env id))
+      (var-exp (id) (buscar-variable env id)) ;por aqui entra
       (primapp-un-exp (prim-unaria exp)
                       (apply-un-primitive prim-unaria (eval-expression exp env)))
       (primapp-bin-exp (exp1 prim-binaria exp2)
@@ -254,7 +254,46 @@
       (cerradura (ids cuerpo env)
                (eval-expression cuerpo (extend-env ids args env))))))
 
-;************************************************************************************************
+;******************************************************************************************
+;eval-expression: <expression> <enviroment> -> numero
+; evalua la expresión en el ambiente de entrada
+;punto2
+
+
+
+; funciones auxiliares para aplicar eval-expression a cada elemento de una
+; lista de operandos (expresiones)
+(define eval-rands
+  (lambda (rands env)
+    (map (lambda (x) (eval-rand x env)) rands)))
+
+(define eval-rand
+  (lambda (rand env)
+    (eval-expression rand env)))
+
+;apply-un-primitive: <primitiva-unaria> (<expression>) -> numero
+(define apply-un-primitive
+  (lambda (prim-unaria exp)
+    (cases primitiva-unaria prim-unaria
+      (primitiva-longitud ()(- (string-length exp) 2))
+      (primitiva-add1 () (+ exp 1))
+      (primitiva-sub1 () (- exp 1)))))
+
+;apply-bin-primitive: (<expression> <primitiva-binaria> <expression>) -> numero
+(define apply-bin-primitive
+  (lambda (exp1 prim-binaria exp2)
+    (cases primitiva-binaria prim-binaria
+      (primitiva-suma () (+ exp1 exp2))
+      (primitiva-resta () (- exp1 exp2))
+      (primitiva-multi () (* exp1 exp2))
+      (primitiva-div () (/ exp1 exp2))
+      (primitiva-concat () (string-append (number->string exp1) (number->string exp2)))
+      )))
+
+;true-value?: determina si un valor dado corresponde a un valor booleano falso o verdadero
+(define true-value?
+  (lambda (x)
+    (not (zero? x))))
 
 ;*******************************************************************************************
 ;Ambientes
@@ -271,28 +310,32 @@
 
 ;empty-env:      -> enviroment
 ;función que crea un ambiente vacío
-(define empty-env  
+(define empty-env
   (lambda ()
-    (empty-env-record)))       ;llamado al constructor de ambiente vacío 
+    (empty-env-record)))       ;llamado al constructor de ambiente vacío
 
 
 ;extend-env: <list-of symbols> <list-of numbers> enviroment -> enviroment
 ;función que crea un ambiente extendido
 (define extend-env
   (lambda (syms vals env)
-    (extended-env-record syms vals env))) 
+    (extended-env-record syms vals env)))
 
-;función que busca un símbolo en un ambiente
-(define apply-env
-  (lambda (env sym)
+;función que busca un identificador en un ambiente
+;Cambiar simbolo por identificador
+(define buscar-variable
+  (lambda (env idn) ;idn es simbolo a buscar
     (cases environment env
       (empty-env-record ()
-                        (eopl:error 'apply-env "No binding for ~s" sym))
-      (extended-env-record (syms vals env)
-                           (let ((pos (list-find-position sym syms)))
+                        (eopl:error 'apply-env "Error la variable no existe: ~s" idn))
+      (extended-env-record (lista-idn vals env) ;lista-idn es lista de simbolos - vals es lista de valores
+                           (let ((pos (list-find-position idn lista-idn)))
                              (if (number? pos)
                                  (list-ref vals pos)
-                                 (apply-env env sym)))))))
+                                 (buscar-variable env idn)))))))
+
+;****************************************************************************************
+;Funciones Auxiliares
 
 ; funciones auxiliares para encontrar la posición de un símbolo
 ; en la lista de símbolos de unambiente
@@ -310,3 +353,34 @@
               (if (number? list-index-r)
                 (+ list-index-r 1)
                 #f))))))
+
+
+;******************************************************************************************
+;PUNTO 2
+;PASO 1: Defina un ambiente inicial con las variables @a @b @c @d @e con los valores (1 2 3 "hola" "FLP")
+;PASO 2: modifique su funcion eval-expression para que acepte dicho ambiente.
+;PASO 3: Diseñe una funcion llamada buscar-variable que recibe un simbolo (identificador) y un ambiente
+;Retorna el valor si encuentra la variable en el ambiente, en el caso contrario "Error, la variable no existe"
+
+;Pruebas:
+; ->@a
+; 1
+; ->@b
+; 2
+; ->@e
+; "FLP"
+
+
+;PASO 1
+(define inicial-env
+  (lambda ()
+    (extend-env '(@a @b @c @d @e) '(1 2 3 "hola" "FLP") (empty-env))))
+
+
+
+;******************************************************************************************
+
+
+;EJERCICIOS
+
+;a)
