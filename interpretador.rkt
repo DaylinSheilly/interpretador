@@ -49,7 +49,7 @@
     ("%"(arbno (not #\newline))) skip)
   ;pregunta como colocar \ \ y letras y numeros al tiempo
   (texto
-   ("/" (arbno (or letter digit)) "/") string)
+   ("\"" (arbno (or letter digit whitespace)) "\"") string)
   ;pregunta solo debe ser valido un ? y cómo se haría
   (identificador
    ;;("@" (arbno (or letter digit)) "?") symbol)
@@ -216,6 +216,7 @@
 
       ))
 )
+
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una 
 ; lista de operandos (expresiones)
 (define eval-rands
