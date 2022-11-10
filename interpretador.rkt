@@ -9,13 +9,6 @@
 |#
 
 #|
-    Diseñe un interpretador para la siguiente gramática que realiza
-    operaciones con notación infija:
-    Valores denotados: Texto + Número + Booleano + ProcVal
-    Valores expresado: Texto + Número + Booleano + ProcVal
-|#
-
-#|
     La definición BNF para las expresiones del lenguaje:
 
     <programa> :=  <expresion> 
@@ -64,10 +57,11 @@
     ("%"(arbno (not #\newline))) skip)
   ;pregunta como colocar \ \ y letras y numeros al tiempo
   (texto
-   ("\"" (arbno (or letter digit whitespace)) "\"") string)
+   ("/" (arbno (or letter digit)) "/") string)
   ;pregunta solo debe ser valido un ? y cómo se haría
   (identificador
-   ("@" (arbno (or letter digit "?"))) symbol)
+   ;;("@" (arbno (or letter digit)) "?") symbol)
+   ("@" letter (arbno (or letter digit "?"))) symbol)
   ; enteros positivos y negativos
   (numero 
    (digit (arbno digit)) number)
@@ -101,13 +95,16 @@
 
     (expression ("Si" expression "entonces" expression "sino" expression "finSI") condicional-exp)
     (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
+
+    (expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
+    ;;Al final me queda una comita (QUITARLA)
+    (expression ("evaluar" expression "("(arbno expression "," ) ")" "finEval" ) app-exp)
    )
 )
 
 ;Tipos de datos para la sintaxis abstracta de la gramática
 
 ;Construidos manualmente:
-
 
 ;(define-datatype program program?
 ;  (a-program
@@ -188,8 +185,8 @@
 (define init-env
   (lambda ()
     (extend-env
-     '(@x @y @z)
-     '(4 2 5)
+     '(@a @b @c @d @e @f)
+     '(1 2 3 "hola" "FLP")
      (empty-env))))
 
 ;eval-expression: <expression> <enviroment> -> numero
@@ -208,11 +205,23 @@
                        ((if (true-value? (eval-expression test-exp env))
                         (eval-expression true-exp env)
                         (eval-expression false-exp env))))
-      (variableLocal-exp (ids exps cuerpo) (let ((args (eval-rands exps env))) 
-                                                (eval-expression cuerpo (extend-env ids args env))))
-    )
-  )
-)
+      ;;(variableLocal-exp (ids exps cuerpo) (0))
+      (variableLocal-exp (ids exps cuerpo)
+               (let ((args (eval-rands exps env)))
+                 (eval-expression cuerpo
+                                  (extend-env ids args env))))
+
+      (procedimiento-exp (ids cuerpo)
+                         (cerradura ids cuerpo env))
+        
+        (app-exp (rator rands)
+               (let ((proc (eval-expression rator env))
+                     (args (eval-rands rands env)))
+                 (if (procval? proc)
+                     (apply-procedure proc args)
+                     (eopl:error 'eval-expression
+                                 "Attempt to apply non-procedure ~s" proc)))))))
+
 ; funciones auxiliares para aplicar eval-expression a cada elemento de una 
 ; lista de operandos (expresiones)
 (define eval-rands
@@ -222,7 +231,6 @@
 (define eval-rand
   (lambda (rand env)
     (eval-expression rand env)))
-
 
 ;apply-un-primitive: <primitiva-unaria> (<expression>) -> numero
 (define apply-un-primitive
@@ -240,22 +248,30 @@
       (primitiva-resta () (- exp1 exp2))
       (primitiva-multi () (* exp1 exp2))
       (primitiva-div () (/ exp1 exp2))
-      (primitiva-concat () (string-append (recortar-string exp1) (recortar-string exp2)))
-    )
-  )
-)
-
-;recortar-string: <string> -> <string>
-(define recortar-string
-  (lambda (str)
-    (substring str 1 (- (string-length str) 1))
-  )
-)
+      (primitiva-concat () (string-append (number->string exp1) (number->string exp2)))
+      )))
 
 ;true-value?: determina si un valor dado corresponde a un valor booleano falso o verdadero
 (define true-value?
   (lambda (x)
     (not (zero? x))))
+
+;************************************************************************************************
+;Procedimientos
+(define-datatype procval procval?
+  (cerradura
+   (list-ID (list-of symbol?))
+   (exp expression?)
+   (amb environment?)))
+
+;apply-procedure: evalua el cuerpo de un procedimientos en el ambiente extendido correspondiente
+(define apply-procedure
+  (lambda (proc args)
+    (cases procval proc
+      (cerradura (ids cuerpo env)
+               (eval-expression cuerpo (extend-env ids args env))))))
+
+;************************************************************************************************
 
 ;*******************************************************************************************
 ;Ambientes
@@ -296,42 +312,6 @@
                                  (apply-env env sym)))))))
 
 
-;****************************************************************************************
-;Funciones Auxiliares
-
-#|
-    7) Extienda la gramática para evaluar procedimientos:
-    <expresion> :=  "evaluar" expresion   (expresion ",")*  finEval
-                app-exp(exp exps)
-|#
-
-#|
-    Debe probar:
-    -->  declarar (
-         @x=2;
-         @y=3;
-         @a=procedimiento (@x,@y,@z) haga ((@x+@y)+@z) finProc
-         ) {
-         evaluar @a (1,2,@x) finEval
-         }
-    5
-    --> declarar (
-        @x=procedimiento (@a,@b) haga ((@a*@a) + (@b*@b)) finProc;
-        @y=procedimiento (@x,@y) haga (@x+@y) finProc
-        ) {
-        ( evaluar @x(1,2) finEval + evaluar @y(2,3) finEval )
-        }
-        10
-    --> declarar (
-        @x= Si (@a*@b) entonces (@d concat @e) sino longitud((@d concat
-        @e)) finSI;
-        @y=procedimiento (@x,@y) haga (@x+@y) finProc
-        ) {
-        ( longitud(@x) * evaluar @y(2,3) finEval )
-          }
-    35
-|#
-
 
 ; funciones auxiliares para encontrar la posición de un símbolo
 ; en la lista de símbolos de unambiente
@@ -349,6 +329,3 @@
               (if (number? list-index-r)
                 (+ list-index-r 1)
                 #f))))))
-
-;******************************************************************************************
-;EJERCICIOS
