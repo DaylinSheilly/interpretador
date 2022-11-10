@@ -173,7 +173,6 @@
 
 ;******************************************************************************************
 
-
 #|
     Diseñe un interpretador para la siguiente gramática que realiza
     operaciones con notación infija:
@@ -194,8 +193,6 @@
                 := (<expresion> <primitiva-binaria> <expresion>)
                 primapp-bin-exp (exp1 prim-binaria exp2)
                 := <primitiva-unaria> (<expresion>)
-=======
->>>>>>> 1f5cb710dcc82ed1c4947600cfeb365f88f6aef1
                 primapp-un-exp (prim-unaria exp)
                 := "Si" <expresion> "entonces" <expresion> "sino" <expresion> "finSi"
                 condicional-exp(test-exp true-exp false-exp)
@@ -210,6 +207,7 @@
                        :=  add1 (primitiva-add1)
                        :=  sub1 (primitiva-sub1)
 |#
+
 #|
     Tenga en cuenta que:
     <numero>: Debe definirse para valores decimales y enteros (positivos y negativos)
@@ -227,19 +225,19 @@
     ("%"(arbno (not #\newline))) skip)
   ;pregunta como colocar \ \ y letras y numeros al tiempo
   (texto
-   ("\"" (arbno (or letter digit whitespace)) "\"") string)
+   ("/" (arbno (or letter digit)) "/") string)
   ;pregunta solo debe ser valido un ? y cómo se haría
   (identificador
    ("@" (arbno (or letter digit "?"))) symbol)
   ; enteros positivos y negativos
-  (numero 
+  (numero
    (digit (arbno digit)) number)
-  (numero 
+  (numero
    ("-" digit (arbno digit)) number)
   ; flotantes positivos y negativos
-  (numero 
+  (numero
    (digit (arbno digit) "." digit (arbno digit)) number)
-  (numero 
+  (numero
    ("-" digit (arbno digit) "." digit (arbno digit)) number)))
 
 ;Especificación Sintáctica (gramática)
@@ -251,11 +249,11 @@
     (expression (identificador) var-exp)
     (expression (primitiva-unaria "("expression")") primapp-un-exp)
     (expression ("("expression primitiva-binaria expression")") primapp-bin-exp)
-    
+
     (primitiva-unaria ("longitud") primitiva-longitud)
     (primitiva-unaria ("add1") primitiva-add1)
     (primitiva-unaria ("sub1") primitiva-sub1)
-    
+
     (primitiva-binaria ("+") primitiva-suma)
     (primitiva-binaria ("~") primitiva-resta)
     (primitiva-binaria ("*") primitiva-multi)
@@ -264,13 +262,8 @@
 
     (expression ("Si" expression "entonces" expression "sino" expression "finSI") condicional-exp)
     (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
-<<<<<<< HEAD
     (expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
      ;;Al final me queda una comita (QUITARLA)
-=======
-
-    (expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
->>>>>>> 1f5cb710dcc82ed1c4947600cfeb365f88f6aef1
     (expression ("evaluar" expression "("(arbno expression "," ) ")" "finEval" ) app-exp)
    )
 )
@@ -331,8 +324,8 @@
 
 (define interpretador
   (sllgen:make-rep-loop  "--❤ "
-    (lambda (pgm) (eval-program  pgm)) 
-    (sllgen:make-stream-parser 
+    (lambda (pgm) (eval-program  pgm))
+    (sllgen:make-stream-parser
       scanner-spec-simple-interpreter
       grammar-simple-interpreter)))
 
@@ -346,17 +339,25 @@
   (lambda (pgm)
     (cases program pgm
       (a-program (body)
-                 (eval-expression body (init-env))))))
+                 (eval-expression body (inicial-env))))))
 
+; Ambiente inicial
+;(define init-env
+;  (lambda ()
+;    (extend-env
+;     '(x y z)
+;     '(4 2 5)
+;     (empty-env))))
 (define init-env
   (lambda ()
     (extend-env
-     '(@a @b @c @d @e @f)
-     '(1 2 3 "hola" "FLP")
+     '(@x @y @z)
+     '(4 2 5)
      (empty-env))))
 
 ;eval-expression: <expression> <enviroment> -> numero
 ; evalua la expresión en el ambiente de entrada
+;punto2
 (define eval-expression
   (lambda (exp env)
     (cases expression exp
@@ -371,89 +372,22 @@
                        ((if (true-value? (eval-expression test-exp env))
                         (eval-expression true-exp env)
                         (eval-expression false-exp env))))
-<<<<<<< HEAD
       ;(variableLocal-exp (ids exps cuerpo) (0))
-=======
->>>>>>> 1f5cb710dcc82ed1c4947600cfeb365f88f6aef1
       (variableLocal-exp (ids exps cuerpo)
                (let ((args (eval-rands exps env)))
                  (eval-expression cuerpo
                                   (extend-env ids args env))))
-<<<<<<< HEAD
 
       (procedimiento-exp (ids cuerpo)
                          (cerradura ids cuerpo env))
 
         (app-exp (rator rands)
-=======
-      (procedimiento-exp (ids cuerpo)
-                         (cerradura ids cuerpo env))
-      (app-exp (rator rands)
->>>>>>> 1f5cb710dcc82ed1c4947600cfeb365f88f6aef1
                (let ((proc (eval-expression rator env))
                      (args (eval-rands rands env)))
                  (if (procval? proc)
                      (apply-procedure proc args)
                      (eopl:error 'eval-expression
-<<<<<<< HEAD
                                  "Attempt to apply non-procedure ~s" proc))))
-=======
-                                 "Attempt to apply non-procedure ~s" proc)))))))
-
-; funciones auxiliares para aplicar eval-expression a cada elemento de una 
-; lista de operandos (expresiones)
-(define eval-rands
-  (lambda (rands env)
-    (map (lambda (x) (eval-rand x env)) rands)))
-
-(define eval-rand
-  (lambda (rand env)
-    (eval-expression rand env)))
-
-;apply-un-primitive: <primitiva-unaria> (<expression>) -> numero
-(define apply-un-primitive
-  (lambda (prim-unaria exp)
-    (cases primitiva-unaria prim-unaria
-      (primitiva-longitud ()(- (string-length exp) 2))
-      (primitiva-add1 () (+ exp 1))
-      (primitiva-sub1 () (- exp 1)))))
-
-;apply-bin-primitive: (<expression> <primitiva-binaria> <expression>) -> numero
-(define apply-bin-primitive
-  (lambda (exp1 prim-binaria exp2)
-    (cases primitiva-binaria prim-binaria
-      (primitiva-suma () (+ exp1 exp2))
-      (primitiva-resta () (- exp1 exp2))
-      (primitiva-multi () (* exp1 exp2))
-      (primitiva-div () (/ exp1 exp2))
-      (primitiva-concat () (string-append (number->string exp1) (number->string exp2)))
-      )))
-
-;true-value?: determina si un valor dado corresponde a un valor booleano falso o verdadero
-(define true-value?
-  (lambda (x)
-    (not (zero? x))))
-
-;************************************************************************************************
-;Procedimientos
-(define-datatype procval procval?
-  (cerradura
-   (list-ID (list-of symbol?))
-   (exp expression?)
-   (amb environment?)))
-
-;apply-procedure: evalua el cuerpo de un procedimientos en el ambiente extendido correspondiente
-(define apply-procedure
-  (lambda (proc args)
-    (cases procval proc
-      (cerradura (ids cuerpo env)
-               (eval-expression cuerpo (extend-env ids args env))))))
-
-;******************************************************************************************
-;eval-expression: <expression> <enviroment> -> numero
-; evalua la expresión en el ambiente de entrada
-;punto2
->>>>>>> 1f5cb710dcc82ed1c4947600cfeb365f88f6aef1
 
 
       )))
@@ -596,7 +530,6 @@
 ;******************************************************************************************
 ;EJERCICIOS
 
-<<<<<<< HEAD
 ;a) 10pts. Escriba un programa en su lenguaje de programación que contenga un procedimiento areaCirculo que permita calcular
 ;el area de un circulo dado un radio (A=PI*r*r). Debe incluir valores flotantes en su lenguaje de programación.
 ;Deberá invocarlo utilizando una variable @radio como parámetro:
@@ -615,7 +548,7 @@
 
 (declarar(
          @radio=2.5;
-         @areaCirculo=2;
+         @areaCirculo=(* 3.14159 (sqr @radio));
          ){
            evaluar @areaCirculo(@radio) finEval
            })
@@ -625,6 +558,3 @@
 ;(expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
 ;Al final me queda una comita (QUITARLA)
 ;(expression ("evaluar" expression "("(arbno expression "," ) ")" "finEval" ) app-exp)
-=======
-;a)
->>>>>>> 1f5cb710dcc82ed1c4947600cfeb365f88f6aef1
