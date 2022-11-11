@@ -376,3 +376,30 @@
 
 ;******************************************************************************************
 ;EJERCICIOS
+
+; b) 5pts. Escriba un programa en su lenguaje de programación que contenga un 
+; procedimiento que permita calcular el factorial de un número n. Como la 
+; gramática para funciones recursivas debe ser propuesta por el grupo, 
+; incluya dos ejemplos de uso para el factorial de 5 y el factorial de 10.
+
+;Primer ejemplo factorial de 5 = 120
+(scan&parse "
+
+declarar (
+@f=procedimiento (@n) haga declaracion-rec
+@fact(@n) = Si @n entonces (@n * evaluar @fact(sub1(@n),) finEval ) sino 1 finSI {
+evaluar @fact (@n,) finEval
+} finProc;){evaluar @f (5,) finEval}
+
+")
+
+;Segundo ejemplo factorial de 10 = 3628800
+(scan&parse "
+
+declarar (
+@f=procedimiento (@n) haga declaracion-rec
+@fact(@n) = Si @n entonces (@n * evaluar @fact(sub1(@n),) finEval ) sino 1 finSI {
+evaluar @fact (@n,) finEval
+} finProc;){evaluar @f (10,) finEval}
+
+")
