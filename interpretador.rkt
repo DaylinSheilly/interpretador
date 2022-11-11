@@ -136,6 +136,7 @@
 |#
 
 #|
+
     Debe probar:
     -->  declarar (
          @x=2;
@@ -159,20 +160,10 @@
         ) {
         ( longitud(@x) * evaluar @y(2,3) finEval )
           }
-    35
+
 |#
 
-;8) Extienda la gramática para incluir llamados recursivos. Proponga una definición en la gramática e impleméntela.
-
-;9) Dibuje el árbol de sintaxis abstracta de los ejercicios del punto 7.
-
-;10) Dibuje el diagrama de ambientes de los ejercicios del punto 7 (tenga en cuenta el ambiente inicial del punto 1).
-
-;11) Utilización del lenguaje de programación:
-
-
-;******************************************************************************************
-
+;------------------------------------------------------------------------------------------------
 #|
     Diseñe un interpretador para la siguiente gramática que realiza
     operaciones con notación infija:
@@ -546,15 +537,10 @@
 ;
  ;      }
 
-(declarar(
+declarar(
          @radio=2.5;
-         @areaCirculo=(* 3.14159 (sqr @radio));
+         @areaCirculo=procedimiento (@insertarRadio) haga (3.14159 * (@insertarRadio * @insertarRadio)) finProc;
          ){
            evaluar @areaCirculo(@radio) finEval
-           })
+           }
 
-
-;(expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
-;(expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
-;Al final me queda una comita (QUITARLA)
-;(expression ("evaluar" expression "("(arbno expression "," ) ")" "finEval" ) app-exp)
