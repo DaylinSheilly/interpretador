@@ -7,20 +7,10 @@
     Juan Esteban Mazuera - 2043008
     Sheilly Ortega - 2040051
 |#
-
-#|
-    Diseñe un interpretador para la siguiente gramática que realiza
-    operaciones con notación infija:
-    Valores denotados: Texto + Número + Booleano + ProcVal
-    Valores expresado: Texto + Número + Booleano + ProcVal
-|#
-
 #|
     La definición BNF para las expresiones del lenguaje:
-
     <programa> :=  <expresion> 
                un-programa (exp)
-
     <expresion> := <numero>
                 numero-lit (num)
                 := "\""<texto> "\""
@@ -35,18 +25,15 @@
                 condicional-exp(test-exp true-exp false-exp)
                 := "declarar" "(" <identificador> "=" <expresion> (";") ")" "{" <expresion> "}"
                 variableLocal-exp(ids exps cuerpo)
-
     <primitiva-binaria> :=  + (primitiva-suma)
                         :=  ~ (primitiva-resta)
                         :=  / (primitiva-div)
                         :=  * (primitiva-multi)
                         :=  concat (primitiva-concat)
-
     <primitiva-unaria> :=  longitud (primitiva-longitud)
                        :=  add1 (primitiva-add1)
                        :=  sub1 (primitiva-sub1)
 |#
-
 #|
     Tenga en cuenta que:
     <numero>: Debe definirse para valores decimales y enteros (positivos y negativos)
@@ -101,13 +88,15 @@
 
     (expression ("Si" expression "entonces" expression "sino" expression "finSI") condicional-exp)
     (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
+
+    (expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
+    (expression ("evaluar" expression "("(separated-list expression "," ) ")" "finEval" ) app-exp)
    )
 )
 
 ;Tipos de datos para la sintaxis abstracta de la gramática
 
 ;Construidos manualmente:
-
 
 ;(define-datatype program program?
 ;  (a-program
@@ -178,18 +167,11 @@
       (a-program (body)
                  (eval-expression body (init-env))))))
 
-; Ambiente inicial
-;(define init-env
-;  (lambda ()
-;    (extend-env
-;     '(x y z)
-;     '(4 2 5)
-;     (empty-env))))
 (define init-env
   (lambda ()
     (extend-env
-     '(@x @y @z)
-     '(4 2 5)
+     '(@a @b @c @d @e @f)
+     '(1 2 3 "hola" "FLP")
      (empty-env))))
 
 ;eval-expression: <expression> <enviroment> -> numero
@@ -199,21 +181,31 @@
     (cases expression exp
       (numero-lit (num) num)
       (texto-lit (txt) txt)
-      (var-exp (id) (apply-env env id))
+      (var-exp (id) (buscar-variable env id)) ;por aqui entra
       (primapp-un-exp (prim-unaria exp)
-                      (apply-un-primitive prim-unaria (eval-expression exp env)))
+                      (apply-un-primitive prim-unaria exp env))
       (primapp-bin-exp (exp1 prim-binaria exp2)
-                       (apply-bin-primitive (eval-expression exp1 env) prim-binaria (eval-expression exp2 env)))
+                       (apply-bin-primitive exp1 prim-binaria exp2 env))
       (condicional-exp (test-exp true-exp false-exp)
-                       ((if (true-value? (eval-expression test-exp env))
-                        (eval-expression true-exp env)
-                        (eval-expression false-exp env))))
-      (variableLocal-exp (ids exps cuerpo) (let ((args (eval-rands exps env))) 
-                                                (eval-expression cuerpo (extend-env ids args env))))
-    )
-  )
-)
-; funciones auxiliares para aplicar eval-expression a cada elemento de una 
+                       (if(true-value? (eval-expression test-exp env))
+                          (eval-expression true-exp env)
+                          (eval-expression false-exp env)
+                        ))
+      (variableLocal-exp (ids exps cuerpo)
+               (let ((args (eval-rands exps env)))
+                 (eval-expression cuerpo
+                                  (extend-env ids args env))))
+      (procedimiento-exp (ids cuerpo)
+                         (cerradura ids cuerpo env))
+      (app-exp (rator rands)
+               (let ((proc (eval-expression rator env))
+                     (args (eval-rands rands env)))
+                 (if (procval? proc)
+                     (apply-procedure proc args)
+                     (eopl:error 'eval-expression
+                                 "Attempt to apply non-procedure ~s" proc)))))))
+
+; funciones auxiliares para aplicar eval-expression a cada elemento de una
 ; lista de operandos (expresiones)
 (define eval-rands
   (lambda (rands env)
@@ -223,32 +215,46 @@
   (lambda (rand env)
     (eval-expression rand env)))
 
-
 ;apply-un-primitive: <primitiva-unaria> (<expression>) -> numero
 (define apply-un-primitive
-  (lambda (prim-unaria exp)
+  (lambda (prim-unaria exp env)
     (cases primitiva-unaria prim-unaria
-      (primitiva-longitud ()(- (string-length exp) 2))
-      (primitiva-add1 () (+ exp 1))
-      (primitiva-sub1 () (- exp 1)))))
+      (primitiva-longitud () (medir-texto exp env))
+      (primitiva-add1 () (+ (eval-expression exp env) 1))
+      (primitiva-sub1 () (- (eval-expression exp env) 1)))))
 
 ;apply-bin-primitive: (<expression> <primitiva-binaria> <expression>) -> numero
+;apply-bin-primitive: (<expression> <primitiva-binaria> <expression>) -> numero
 (define apply-bin-primitive
-  (lambda (exp1 prim-binaria exp2)
+  (lambda (exp1 prim-binaria exp2 env)
     (cases primitiva-binaria prim-binaria
-      (primitiva-suma () (+ exp1 exp2))
-      (primitiva-resta () (- exp1 exp2))
-      (primitiva-multi () (* exp1 exp2))
-      (primitiva-div () (/ exp1 exp2))
-      (primitiva-concat () (string-append (recortar-string exp1) (recortar-string exp2)))
+      (primitiva-suma () (+ (eval-expression exp1 env) (eval-expression exp2 env)))
+      (primitiva-resta () (- (eval-expression exp1 env) (eval-expression exp2 env)))
+      (primitiva-multi () (* (eval-expression exp1 env) (eval-expression exp2 env)))
+      (primitiva-div () (/ (eval-expression exp1 env) (eval-expression exp2 env)))
+      (primitiva-concat () (string-append (recortar-string exp1 env) (recortar-string exp2 env)))
+    )
+  )
+)
+
+;medir-texto: <string> -> <number>
+(define medir-texto
+  (lambda (exp env)
+    (cases expression exp
+      (texto-lit (txt) (-(string-length (eval-expression exp env))2))
+      (var-exp (id) (string-length (eval-expression exp env)))
+      (else (0))
     )
   )
 )
 
 ;recortar-string: <string> -> <string>
 (define recortar-string
-  (lambda (str)
-    (substring str 1 (- (string-length str) 1))
+  (lambda (exp env)
+    (cases expression exp
+      (texto-lit (txt) (substring (eval-expression exp env) 1 (- (string-length (eval-expression exp env)) 1)))
+      (else (eval-expression exp env))
+    )
   )
 )
 
@@ -256,6 +262,22 @@
 (define true-value?
   (lambda (x)
     (not (zero? x))))
+
+;************************************************************************************************
+;Procedimientos
+(define-datatype procval procval?
+  (cerradura
+   (list-ID (list-of symbol?))
+   (exp expression?)
+   (amb environment?)))
+
+;apply-procedure: evalua el cuerpo de un procedimientos en el ambiente extendido correspondiente
+(define apply-procedure
+  (lambda (proc args)
+    (cases procval proc
+      (cerradura (ids cuerpo env)
+               (eval-expression cuerpo (extend-env ids args env))))))
+
 
 ;*******************************************************************************************
 ;Ambientes
@@ -272,66 +294,32 @@
 
 ;empty-env:      -> enviroment
 ;función que crea un ambiente vacío
-(define empty-env  
+(define empty-env
   (lambda ()
-    (empty-env-record)))       ;llamado al constructor de ambiente vacío 
+    (empty-env-record)))       ;llamado al constructor de ambiente vacío
 
 
 ;extend-env: <list-of symbols> <list-of numbers> enviroment -> enviroment
 ;función que crea un ambiente extendido
 (define extend-env
   (lambda (syms vals env)
-    (extended-env-record syms vals env))) 
+    (extended-env-record syms vals env)))
 
-;función que busca un símbolo en un ambiente
-(define apply-env
-  (lambda (env sym)
+;función que busca un identificador en un ambiente
+;Cambiar simbolo por identificador
+(define buscar-variable
+  (lambda (env idn) ;idn es simbolo a buscar
     (cases environment env
       (empty-env-record ()
-                        (eopl:error 'apply-env "No binding for ~s" sym))
-      (extended-env-record (syms vals env)
-                           (let ((pos (list-find-position sym syms)))
+                        (eopl:error 'apply-env "Error la variable no existe: ~s" idn))
+      (extended-env-record (lista-idn vals env) ;lista-idn es lista de simbolos - vals es lista de valores
+                           (let ((pos (list-find-position idn lista-idn)))
                              (if (number? pos)
                                  (list-ref vals pos)
-                                 (apply-env env sym)))))))
-
+                                 (buscar-variable env idn)))))))
 
 ;****************************************************************************************
 ;Funciones Auxiliares
-
-#|
-    7) Extienda la gramática para evaluar procedimientos:
-    <expresion> :=  "evaluar" expresion   (expresion ",")*  finEval
-                app-exp(exp exps)
-|#
-
-#|
-    Debe probar:
-    -->  declarar (
-         @x=2;
-         @y=3;
-         @a=procedimiento (@x,@y,@z) haga ((@x+@y)+@z) finProc
-         ) {
-         evaluar @a (1,2,@x) finEval
-         }
-    5
-    --> declarar (
-        @x=procedimiento (@a,@b) haga ((@a*@a) + (@b*@b)) finProc;
-        @y=procedimiento (@x,@y) haga (@x+@y) finProc
-        ) {
-        ( evaluar @x(1,2) finEval + evaluar @y(2,3) finEval )
-        }
-        10
-    --> declarar (
-        @x= Si (@a*@b) entonces (@d concat @e) sino longitud((@d concat
-        @e)) finSI;
-        @y=procedimiento (@x,@y) haga (@x+@y) finProc
-        ) {
-        ( longitud(@x) * evaluar @y(2,3) finEval )
-          }
-    35
-|#
-
 
 ; funciones auxiliares para encontrar la posición de un símbolo
 ; en la lista de símbolos de unambiente
@@ -350,5 +338,37 @@
                 (+ list-index-r 1)
                 #f))))))
 
+
 ;******************************************************************************************
-;EJERCICIOS
+;PUNTO 2
+;PASO 1: Defina un ambiente inicial con las variables @a @b @c @d @e con los valores (1 2 3 "hola" "FLP")
+;PASO 2: modifique su funcion eval-expression para que acepte dicho ambiente.
+;PASO 3: Diseñe una funcion llamada buscar-variable que recibe un simbolo (identificador) y un ambiente
+;Retorna el valor si encuentra la variable en el ambiente, en el caso contrario "Error, la variable no existe"
+
+;Pruebas:
+; ->@a
+; 1
+; ->@b
+; 2
+; ->@e
+; "FLP"
+
+
+;PASO 1
+(define inicial-env
+  (lambda ()
+    (extend-env '(@a @b @c @d @e) '(1 2 3 "hola" "FLP") (empty-env))))
+
+
+
+;******************************************************************************************
+
+#|
+EJERCICIOS
+
+d) 15pts. Escriba un programa en su lenguaje de programación que permita
+restar y multiplicar dos números haciendo uso solamente de las primitivas
+add1 y sub1. Incluya llamados:  "evaluar @restar (10, 3) finEval  ", 
+"evaluar @multiplicar (10, 3) finEval  ".
+|#
