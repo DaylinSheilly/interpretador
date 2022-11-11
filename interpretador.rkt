@@ -264,7 +264,6 @@
   (empty-env-record)
   (extended-env-record (syms (list-of symbol?))
                        (vals (list-of scheme-value?))
-
                        (env environment?)))
 
 (define scheme-value? (lambda (v) #t))
