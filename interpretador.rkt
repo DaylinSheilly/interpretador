@@ -354,7 +354,6 @@
 ; ->@e
 ; "FLP"
 
-
 ;PASO 1
 (define inicial-env
   (lambda ()
@@ -363,8 +362,23 @@
 
 
 ;******************************************************************************************
-
-
 ;EJERCICIOS
 
-;a)
+;Ejercicio e
+;En python se puede utilizar algo que se llaman decoradores (por favor leer aquí). Crea una función @integrantes que muestre
+;los nombres de los integrantes del grupo y adicionalmente crea un decorador que al invocarlo salude a los integrantes:
+
+; declarar
+; (
+; @integrantes=procedimiento () haga "Cesar-Johan-Laura-Juan-Sheilly" finProc;
+; @saludar=procedimiento (@entrada) haga ("Hola: " concat @entrada) finProc;
+; )
+; {
+; declarar
+; (
+; @decorate=evaluar @saludar(evaluar @integrantes() finEval) finEval;
+; )
+; {
+; @decorate
+; }
+; }
