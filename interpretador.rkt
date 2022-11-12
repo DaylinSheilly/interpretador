@@ -6,10 +6,11 @@
     Laura Murillas Andrade - 1944153
     Juan Esteban Mazuera - 2043008
     Sheilly Ortega - 2040051
+
+    Repositorio de GitHub: https://github.com/DaylinSheilly/interpretador.git
 |#
 #|
     La definición BNF para las expresiones del lenguaje:
-
     <programa> :=  <expresion> 
                un-programa (exp)
     <expresion> := <numero>
@@ -52,7 +53,7 @@
     ("%"(arbno (not #\newline))) skip)
   ;pregunta como colocar \ \ y letras y numeros al tiempo
   (texto
-   ("\"" (arbno (or letter digit whitespace)) "\"") string)
+   ("\"" (arbno (or letter digit whitespace "-" ":")) "\"") string)
   ;pregunta solo debe ser valido un ? y cómo se haría
   (identificador
    ("@" (arbno (or letter digit "?"))) symbol)
@@ -91,7 +92,9 @@
     (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
 
     (expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
-    (expression ("evaluar" expression "("(arbno expression "," ) ")" "finEval" ) app-exp)
+    (expression ("evaluar" expression "("(separated-list expression "," ) ")" "finEval" ) app-exp)
+    (expression ("declaracion-rec" (arbno identificador "(" (separated-list identificador ",") ")" "=" expression) "{" expression "}") declaracion-rec)
+    
    )
 )
 
@@ -184,13 +187,14 @@
       (texto-lit (txt) txt)
       (var-exp (id) (buscar-variable env id)) ;por aqui entra
       (primapp-un-exp (prim-unaria exp)
-                      (apply-un-primitive prim-unaria (eval-expression exp env)))
+                      (apply-un-primitive prim-unaria exp env))
       (primapp-bin-exp (exp1 prim-binaria exp2)
-                       (apply-bin-primitive (eval-expression exp1 env) prim-binaria (eval-expression exp2 env)))
+                       (apply-bin-primitive exp1 prim-binaria exp2 env))
       (condicional-exp (test-exp true-exp false-exp)
-                       ((if (true-value? (eval-expression test-exp env))
-                        (eval-expression true-exp env)
-                        (eval-expression false-exp env))))
+                       (if(true-value? (eval-expression test-exp env))
+                          (eval-expression true-exp env)
+                          (eval-expression false-exp env)
+                        ))
       (variableLocal-exp (ids exps cuerpo)
                (let ((args (eval-rands exps env)))
                  (eval-expression cuerpo
@@ -203,9 +207,14 @@
                  (if (procval? proc)
                      (apply-procedure proc args)
                      (eopl:error 'eval-expression
-                                 "Attempt to apply non-procedure ~s" proc)))))))
+                                 "Attempt to apply non-procedure ~s" proc))))
+      
+      (declaracion-rec (proc-names idss bodies letrec-body)
+                  (eval-expression letrec-body
+                                   (extend-env-recursively proc-names idss bodies env)))
+      )))
 
-; funciones auxiliares para aplicar eval-expression a cada elemento de una 
+; funciones auxiliares para aplicar eval-expression a cada elemento de una
 ; lista de operandos (expresiones)
 (define eval-rands
   (lambda (rands env)
@@ -217,22 +226,46 @@
 
 ;apply-un-primitive: <primitiva-unaria> (<expression>) -> numero
 (define apply-un-primitive
-  (lambda (prim-unaria exp)
+  (lambda (prim-unaria exp env)
     (cases primitiva-unaria prim-unaria
-      (primitiva-longitud ()(- (string-length exp) 2))
-      (primitiva-add1 () (+ exp 1))
-      (primitiva-sub1 () (- exp 1)))))
+      (primitiva-longitud () (medir-texto exp env))
+      (primitiva-add1 () (+ (eval-expression exp env) 1))
+      (primitiva-sub1 () (- (eval-expression exp env) 1)))))
 
 ;apply-bin-primitive: (<expression> <primitiva-binaria> <expression>) -> numero
+;apply-bin-primitive: (<expression> <primitiva-binaria> <expression>) -> numero
 (define apply-bin-primitive
-  (lambda (exp1 prim-binaria exp2)
+  (lambda (exp1 prim-binaria exp2 env)
     (cases primitiva-binaria prim-binaria
-      (primitiva-suma () (+ exp1 exp2))
-      (primitiva-resta () (- exp1 exp2))
-      (primitiva-multi () (* exp1 exp2))
-      (primitiva-div () (/ exp1 exp2))
-      (primitiva-concat () (string-append (number->string exp1) (number->string exp2)))
-      )))
+      (primitiva-suma () (+ (eval-expression exp1 env) (eval-expression exp2 env)))
+      (primitiva-resta () (- (eval-expression exp1 env) (eval-expression exp2 env)))
+      (primitiva-multi () (* (eval-expression exp1 env) (eval-expression exp2 env)))
+      (primitiva-div () (/ (eval-expression exp1 env) (eval-expression exp2 env)))
+      (primitiva-concat () (string-append (recortar-string exp1 env) (recortar-string exp2 env)))
+    )
+  )
+)
+
+;medir-texto: <string> -> <number>
+(define medir-texto
+  (lambda (exp env)
+    (cases expression exp
+      (texto-lit (txt) (-(string-length (eval-expression exp env))2))
+      (var-exp (id) (string-length (eval-expression exp env)))
+      (else (0))
+    )
+  )
+)
+
+;recortar-string: <string> -> <string>
+(define recortar-string
+  (lambda (exp env)
+    (cases expression exp
+      (texto-lit (txt) (substring (eval-expression exp env) 1 (- (string-length (eval-expression exp env)) 1)))
+      (else (eval-expression exp env))
+    )
+  )
+)
 
 ;true-value?: determina si un valor dado corresponde a un valor booleano falso o verdadero
 (define true-value?
@@ -254,47 +287,6 @@
       (cerradura (ids cuerpo env)
                (eval-expression cuerpo (extend-env ids args env))))))
 
-;******************************************************************************************
-;eval-expression: <expression> <enviroment> -> numero
-; evalua la expresión en el ambiente de entrada
-;punto2
-
-
-
-; funciones auxiliares para aplicar eval-expression a cada elemento de una
-; lista de operandos (expresiones)
-(define eval-rands
-  (lambda (rands env)
-    (map (lambda (x) (eval-rand x env)) rands)))
-
-(define eval-rand
-  (lambda (rand env)
-    (eval-expression rand env)))
-
-;apply-un-primitive: <primitiva-unaria> (<expression>) -> numero
-(define apply-un-primitive
-  (lambda (prim-unaria exp)
-    (cases primitiva-unaria prim-unaria
-      (primitiva-longitud ()(- (string-length exp) 2))
-      (primitiva-add1 () (+ exp 1))
-      (primitiva-sub1 () (- exp 1)))))
-
-;apply-bin-primitive: (<expression> <primitiva-binaria> <expression>) -> numero
-(define apply-bin-primitive
-  (lambda (exp1 prim-binaria exp2)
-    (cases primitiva-binaria prim-binaria
-      (primitiva-suma () (+ exp1 exp2))
-      (primitiva-resta () (- exp1 exp2))
-      (primitiva-multi () (* exp1 exp2))
-      (primitiva-div () (/ exp1 exp2))
-      (primitiva-concat () (string-append (number->string exp1) (number->string exp2)))
-      )))
-
-;true-value?: determina si un valor dado corresponde a un valor booleano falso o verdadero
-(define true-value?
-  (lambda (x)
-    (not (zero? x))))
-
 ;*******************************************************************************************
 ;Ambientes
 
@@ -303,7 +295,13 @@
   (empty-env-record)
   (extended-env-record (syms (list-of symbol?))
                        (vals (list-of scheme-value?))
-                       (env environment?)))
+
+                       (env environment?))
+  (recursively-extended-env-record (proc-names (list-of symbol?))
+                                   (idss (list-of (list-of symbol?)))
+                                   (bodies (list-of expression?))
+                                   (env environment?))
+  )
 
 (define scheme-value? (lambda (v) #t))
 
@@ -313,12 +311,18 @@
   (lambda ()
     (empty-env-record)))       ;llamado al constructor de ambiente vacío
 
-
 ;extend-env: <list-of symbols> <list-of numbers> enviroment -> enviroment
 ;función que crea un ambiente extendido
 (define extend-env
   (lambda (syms vals env)
     (extended-env-record syms vals env)))
+
+;extend-env-recursively: <list-of symbols> <list-of <list-of symbols>> <list-of expressions> environment -> environment
+;función que crea un ambiente extendido para procedimientos recursivos
+(define extend-env-recursively
+  (lambda (proc-names idss bodies old-env)
+    (recursively-extended-env-record
+     proc-names idss bodies old-env)))
 
 ;función que busca un identificador en un ambiente
 ;Cambiar simbolo por identificador
@@ -331,7 +335,17 @@
                            (let ((pos (list-find-position idn lista-idn)))
                              (if (number? pos)
                                  (list-ref vals pos)
-                                 (buscar-variable env idn)))))))
+                                 (buscar-variable env idn))))
+
+      (recursively-extended-env-record (proc-names idss bodies old-env)
+                                       (let ((pos (list-find-position idn proc-names)))
+                                         (if (number? pos)
+                                             (cerradura (list-ref idss pos)
+                                                      (list-ref bodies pos)
+                                                      env)
+                                             (buscar-variable old-env idn))))
+      
+      )))
 
 ;****************************************************************************************
 ;Funciones Auxiliares
@@ -353,7 +367,6 @@
                 (+ list-index-r 1)
                 #f))))))
 
-
 ;******************************************************************************************
 ;PUNTO 2
 ;PASO 1: Defina un ambiente inicial con las variables @a @b @c @d @e con los valores (1 2 3 "hola" "FLP")
@@ -369,17 +382,118 @@
 ; ->@e
 ; "FLP"
 
-
 ;PASO 1
 (define inicial-env
   (lambda ()
     (extend-env '(@a @b @c @d @e) '(1 2 3 "hola" "FLP") (empty-env))))
 
-
-
 ;******************************************************************************************
-
-
 ;EJERCICIOS
 
-;a)
+;Ejercicio a
+;Escriba un programa en su lenguaje de programación que contenga un procedimiento areaCirculo que permita calcular
+;el area de un circulo dado un radio (A=PI*r*r). Debe incluir valores flotantes en su lenguaje de programación.
+;Deberá invocarlo utilizando una variable @radio como parámetro:
+
+; declarar(
+;          @radio=2.5;
+;          @areaCirculo=procedimiento (@insertarRadio) haga (3.14159 * (@insertarRadio * @insertarRadio)) finProc;
+;          ){
+;            evaluar @areaCirculo(@radio) finEval
+;            }
+
+;Ejercicio b
+;Escriba un programa en su lenguaje de programación que contenga un procedimiento que permita calcular el
+;factorial de un número n. Como la gramática para funciones recursivas debe ser propuesta por el grupo, incluya
+;dos ejemplos de uso para el factorial de 5 y el factorial de 10.
+
+; declarar (
+; @f=procedimiento (@n) haga declaracion-rec
+; @fact(@n) = Si @n entonces (@n * evaluar @fact(sub1(@n)) finEval ) sino 1 finSI {
+; evaluar @fact (@n) finEval
+; } finProc;){evaluar @f (10) finEval}
+
+; declarar (
+; @f=procedimiento (@n) haga declaracion-rec
+; @fact(@n) = Si @n entonces (@n * evaluar @fact(sub1(@n)) finEval ) sino 1 finSI {
+; evaluar @fact (@n) finEval
+; } finProc;){evaluar @f (5) finEval}
+
+;Ejercicio c
+;Escriba un programa en su lenguaje de programación que contenga un procedimiento que permita calcular una
+;suma de forma recursiva. Debe hacer uso de las funciones add1 y sub1 (remitase a la clase donde se implementó)
+;la interfaz con las funciones zero, isZero?, sucessor, predecessor). Si no se evidencia el uso de add1 y sub1,
+;el ejercicio no será valido. Incluya un llamado a la función recursiva: "evaluar @sumar (4, 5) finEval"
+
+; declarar (
+; @suma=procedimiento (@n,@n1) haga declaracion-rec
+; @s(@n) = Si @n entonces  add1(evaluar @s(sub1(@n)) finEval )sino @n1 finSI {
+; evaluar @s (@n,@n1) finEval
+; } finProc;){evaluar @suma (9,2) finEval}
+
+;Ejercicio d
+;Escriba un programa en su lenguaje de programación que permita restar y multiplicar dos números haciendo uso solamente
+;de las primitivas add1 y sub1. Incluya llamados:  "evaluar @restar (10, 3) finEval  ",  "evaluar @multiplicar (10, 3) finEval  ".
+
+; declarar (
+; 
+; @resta=procedimiento (@x,@y) haga declaracion-rec
+; @r(@y) = Si @y entonces  sub1(evaluar @r(sub1(@y)) finEval )sino @x finSI {
+; evaluar @r (@y,@x) finEval
+; } finProc;
+; 
+; 
+; @multiplicar=procedimiento (@x,@y) haga declaracion-rec
+; @m(@x) = Si @x entonces
+;             Si @y entonces
+; 
+;                declarar (
+;                @suma=procedimiento (@n,@n1) haga declaracion-rec
+;                @s(@n) = Si @n entonces  add1(evaluar @s(sub1(@n)) finEval )sino @n1 finSI {
+;                evaluar @s (@n,@n1) finEval
+;                } finProc;){evaluar @suma ( evaluar @m(sub1(@x)) finEval,@y) finEval}
+;                
+;             sino 0 finSI
+;          sino 0 finSI {
+; evaluar @m (@x,@y) finEval
+; } finProc;
+; 
+; ){evaluar @resta (10,5) finEval}
+
+;Ejercicio e
+;En python se puede utilizar algo que se llaman decoradores (por favor leer aquí). Crea una función @integrantes que muestre
+;los nombres de los integrantes del grupo y adicionalmente crea un decorador que al invocarlo salude a los integrantes:
+
+; declarar
+; (
+; @integrantes=procedimiento () haga "Cesar-Johan-Laura-Juan-Sheilly" finProc;
+; @saludar=procedimiento (@entrada) haga ("Hola: " concat @entrada) finProc;
+; )
+; {
+; declarar
+; (
+; @decorate=evaluar @saludar(evaluar @integrantes() finEval) finEval;
+; )
+; {
+; @decorate
+; }
+; }
+
+;Ejercicio f
+;Modifique el ejercicio anterior para que el decorador reciba como parámetro otro mensaje que debe ponerse al final de
+;todo el string (cualquier implementación sin el concepto de decorador no será evaluada).
+
+; declarar
+; (
+; @integrantes=procedimiento () haga "Cesar-Johan-Laura-Juan-Sheilly" finProc;
+; @saludar=procedimiento (@entrada) haga ("Hola: " concat @entrada) finProc;
+; )
+; {
+; declarar
+; (
+; @decorate=procedimiento (@mensaje) haga (evaluar @saludar(evaluar @integrantes() finEval) finEval concat @mensaje) finProc;
+; )
+; {
+; evaluar @decorate("-integrantes del grupo") finEval
+; }
+; }
