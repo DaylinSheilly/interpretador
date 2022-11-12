@@ -412,3 +412,57 @@ evaluar @fact (@n,) finEval
 ;  @s(@n) = Si @n entonces  add1(evaluar @s(sub1(@n)) finEval )sino @n1 finSI {
 ;  evaluar @s (@n,@n1) finEval
 ;  } finProc;){evaluar @suma (9,2) finEval}
+
+;Ejercicio d
+;Primer ejercicio evaluando la resta
+; declarar (
+
+; @resta=procedimiento (@x,@y) haga declaracion-rec
+; @r(@y) = Si @y entonces  sub1(evaluar @r(sub1(@y)) finEval )sino @x finSI {
+; evaluar @r (@y,@x) finEval
+; } finProc;
+
+
+; @multi =procedimiento (@x,@y) haga declaracion-rec
+; @m(@x) = Si @x entonces
+;             Si @y entonces
+
+;                declarar (
+;                @suma=procedimiento (@n,@n1) haga declaracion-rec
+;                @s(@n) = Si @n entonces  add1(evaluar @s(sub1(@n)) finEval )sino @n1 finSI {
+;                evaluar @s (@n,@n1) finEval
+;                } finProc;){evaluar @suma ( evaluar @m(sub1(@x)) finEval,@y) finEval}
+               
+;             sino 0 finSI
+;          sino 0 finSI {
+; evaluar @m (@x,@y) finEval
+; } finProc;
+
+; ){evaluar @resta (10,5) finEval}
+
+;Segundo ejercicio evaluando la multiplicacion
+
+; declarar (
+
+; @resta=procedimiento (@x,@y) haga declaracion-rec
+; @r(@y) = Si @y entonces  sub1(evaluar @r(sub1(@y)) finEval )sino @x finSI {
+; evaluar @r (@y,@x) finEval
+; } finProc;
+
+
+; @multiplicar =procedimiento (@x,@y) haga declaracion-rec
+; @m(@x) = Si @x entonces
+;             Si @y entonces
+
+;                declarar (
+;                @suma=procedimiento (@n,@n1) haga declaracion-rec
+;                @s(@n) = Si @n entonces  add1(evaluar @s(sub1(@n)) finEval )sino @n1 finSI {
+;                evaluar @s (@n,@n1) finEval
+;                } finProc;){evaluar @suma ( evaluar @m(sub1(@x)) finEval,@y) finEval}
+               
+;             sino 0 finSI
+;          sino 0 finSI {
+; evaluar @m (@x,@y) finEval
+; } finProc;
+
+; ){evaluar @multiplicar (10,5) finEval}
