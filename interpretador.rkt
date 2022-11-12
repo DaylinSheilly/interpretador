@@ -364,11 +364,21 @@
 
 ;******************************************************************************************
 
-#|
-EJERCICIOS
-
-d) 15pts. Escriba un programa en su lenguaje de programación que permita
-restar y multiplicar dos números haciendo uso solamente de las primitivas
-add1 y sub1. Incluya llamados:  "evaluar @restar (10, 3) finEval  ", 
-"evaluar @multiplicar (10, 3) finEval  ".
-|#
+;Ejercicio f
+;Modifique el ejercicio anterior para que el decorador reciba como parámetro otro mensaje que debe ponerse al final de
+;todo el string (cualquier implementación sin el concepto de decorador no será evaluada).
+;
+; declarar
+; (
+; @integrantes=procedimiento () haga "Cesar-Johan-Laura-Juan-Sheilly" finProc;
+; @saludar=procedimiento (@entrada) haga ("Hola: " concat @entrada) finProc;
+; )
+; {
+; declarar
+; (
+; @decorate=procedimiento (@mensaje) haga (evaluar @saludar(evaluar @integrantes() finEval) finEval concat @mensaje) finProc;
+; )
+; {
+; evaluar @decorate("-integrantes del grupo") finEval
+; }
+; }
