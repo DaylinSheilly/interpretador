@@ -94,7 +94,7 @@
 
     (expression ("Si" expression "entonces" expression "sino" expression "finSI") condicional-exp)
     (expression ("declarar" "(" (arbno identificador "=" expression ";") ")" "{" expression "}") variableLocal-exp)
-<
+
     ;; Extendiendo procedimientos
     (expression ("procedimiento" "(" (separated-list identificador ",") ")" "haga" expression "finProc" )procedimiento-exp)
     ;;Extendiendo para Evaluar procedimientos
@@ -403,12 +403,3 @@ evaluar @fact (@n,) finEval
 } finProc;){evaluar @f (10,) finEval}
 
 ")
-
-
-;;Ejercicio c
-
-;  declarar (
-;  @suma=procedimiento (@n,@n1) haga declaracion-rec
-;  @s(@n) = Si @n entonces  add1(evaluar @s(sub1(@n)) finEval )sino @n1 finSI {
-;  evaluar @s (@n,@n1) finEval
-;  } finProc;){evaluar @suma (9,2) finEval}
